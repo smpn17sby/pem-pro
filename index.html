@@ -151,14 +151,15 @@
         }
         .kelas-card.terbuka .submenu-game { max-height: 550px; padding: 10px 15px 20px; }
 
+        /* GAME ITEM */
         .game-item {
             display: flex; align-items: center; gap: 10px; padding: 12px 15px;
             border-radius: 12px; text-decoration: none; color: #333; background: white;
             border: 2px solid #e0e0e0; transition: all 0.3s ease;
-            font-weight: 500; margin-bottom: 8px; font-size: 0.95em;
+            font-weight: 500; margin-bottom: 8px; font-size: 0.95em; cursor: pointer;
         }
         .game-item.available {
-            border-color: #4caf50; background: #f1f8e9; cursor: pointer;
+            border-color: #4caf50; background: #f1f8e9;
         }
         .game-item.available:hover {
             transform: translateX(5px); box-shadow: 0 5px 15px rgba(0,0,0,0.15);
@@ -168,9 +169,58 @@
             opacity: 0.5; cursor: not-allowed; filter: grayscale(30%);
             pointer-events: none; border-color: #e0e0e0; background: #fafafa;
         }
+        
+        /* GAME ITEM - SUDAH ADA LINK (SIAP DIMAINKAN) */
+        .game-item.ada-link {
+            border-color: #2196f3 !important;
+            background: #e3f2fd !important;
+            position: relative;
+        }
+        .game-item.ada-link::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 5px; height: 100%;
+            background: #2196f3;
+            border-radius: 12px 0 0 12px;
+        }
+        .game-item.ada-link:hover {
+            border-color: #1565c0 !important;
+            background: #bbdefb !important;
+            box-shadow: 0 5px 20px rgba(33, 150, 243, 0.3);
+        }
+        
+        /* GAME ITEM - BELUM ADA LINK */
+        .game-item.belum-ada-link {
+            border-color: #e0e0e0 !important;
+            background: #fafafa !important;
+        }
+        .game-item.belum-ada-link::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 5px; height: 100%;
+            background: #bdbdbd;
+            border-radius: 12px 0 0 12px;
+        }
+        
         .game-item .game-emoji { font-size: 1.5em; flex-shrink: 0; }
         .game-item .game-name { flex: 1; text-align: left; }
-        .game-item .lock-badge { margin-left: auto; font-size: 0.9em; }
+        
+        /* BADGE STATUS LINK */
+        .game-item .link-badge {
+            margin-left: auto; font-size: 0.75em; font-weight: 600;
+            padding: 4px 10px; border-radius: 15px; white-space: nowrap;
+        }
+        .game-item .link-badge.badge-ready {
+            background: #2196f3; color: white;
+        }
+        .game-item .link-badge.badge-coming {
+            background: #e0e0e0; color: #666;
+        }
+        .game-item.locked .link-badge {
+            background: #bdbdbd; color: #757575;
+        }
 
         .kelas-card .locked-label {
             display: none; background: #ff5252; color: white; font-size: 0.75em;
@@ -179,30 +229,21 @@
         }
         .kelas-card.terkunci-semua .locked-label { display: block; }
 
-        .popup-alert {
-            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center;
+        /* LEGENDA */
+        .legenda {
+            display: flex; justify-content: center; gap: 25px; flex-wrap: wrap;
+            margin-top: 20px; font-size: 0.85em; color: #666;
         }
-        .popup-alert.show { display: flex; }
-        .popup-content {
-            background: white; padding: 30px; border-radius: 20px; text-align: center;
-            max-width: 400px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            animation: popIn 0.3s ease;
+        .legenda-item {
+            display: flex; align-items: center; gap: 8px;
         }
-        @keyframes popIn {
-            from { transform: scale(0.8); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
+        .legenda-dot {
+            width: 15px; height: 15px; border-radius: 4px;
         }
-        .popup-content .popup-icon { font-size: 4em; margin-bottom: 10px; }
-        .popup-content h3 { color: #d32f2f; margin-bottom: 10px; }
-        .popup-content p { color: #666; margin-bottom: 20px; white-space: pre-line; }
-        .popup-content button {
-            background: #667eea; color: white; border: none; padding: 10px 30px;
-            border-radius: 25px; font-size: 1em; cursor: pointer; transition: all 0.3s ease;
-        }
-        .popup-content button:hover { background: #5a6fd6; transform: scale(1.05); }
+        .legenda-dot.ready { background: #2196f3; }
+        .legenda-dot.coming { background: #bdbdbd; }
 
-        .footer { margin-top: 25px; color: #999; font-size: 0.9em; }
+        .footer { margin-top: 15px; color: #999; font-size: 0.9em; }
     </style>
 </head>
 <body>
@@ -267,60 +308,62 @@
                     <span class="arrow">▼</span>
                 </div>
                 <div class="submenu-game">
-                    <a href="https://www.educaplay.com/learning-resources/29960980-kuis_smp_fpb_kpk_bangun_datar_pecahan.html" target="_blank" rel="noopener" class="game-item locked" data-mapel="Matematika Kelas 7">
+                    <!-- MATEMATIKA - SUDAH ADA LINK -->
+                    <a href="https://www.educaplay.com/learning-resources/29960980-kuis_smp_fpb_kpk_bangun_datar_pecahan.html" target="_blank" rel="noopener" class="game-item locked ada-link" data-mapel="Matematika Kelas 7" data-ada-link="true">
                         <span class="game-emoji">📐</span>
                         <span class="game-name">Matematika</span>
-                        <span class="lock-badge">🔒</span>
+                        <span class="link-badge badge-ready">🔓 Siap Main</span>
                     </a>
-                    <a href="#" class="game-item locked" data-mapel="IPA Kelas 7">
+                    <!-- BELUM ADA LINK -->
+                    <a href="#" class="game-item locked belum-ada-link" data-mapel="IPA Kelas 7" data-ada-link="false">
                         <span class="game-emoji">🔬</span>
                         <span class="game-name">IPA</span>
-                        <span class="lock-badge">🔒</span>
+                        <span class="link-badge badge-coming">🔒 Segera</span>
                     </a>
-                    <a href="#" class="game-item locked" data-mapel="Bahasa Indonesia Kelas 7">
+                    <a href="#" class="game-item locked belum-ada-link" data-mapel="Bahasa Indonesia Kelas 7" data-ada-link="false">
                         <span class="game-emoji">📝</span>
                         <span class="game-name">Bahasa Indonesia</span>
-                        <span class="lock-badge">🔒</span>
+                        <span class="link-badge badge-coming">🔒 Segera</span>
                     </a>
-                    <a href="#" class="game-item locked" data-mapel="Bahasa Inggris Kelas 7">
+                    <a href="#" class="game-item locked belum-ada-link" data-mapel="Bahasa Inggris Kelas 7" data-ada-link="false">
                         <span class="game-emoji">🗣️</span>
                         <span class="game-name">Bahasa Inggris</span>
-                        <span class="lock-badge">🔒</span>
+                        <span class="link-badge badge-coming">🔒 Segera</span>
                     </a>
-                    <a href="#" class="game-item locked" data-mapel="IPS Kelas 7">
+                    <a href="#" class="game-item locked belum-ada-link" data-mapel="IPS Kelas 7" data-ada-link="false">
                         <span class="game-emoji">🌏</span>
                         <span class="game-name">IPS</span>
-                        <span class="lock-badge">🔒</span>
+                        <span class="link-badge badge-coming">🔒 Segera</span>
                     </a>
-                    <a href="#" class="game-item locked" data-mapel="PAI Kelas 7">
+                    <a href="#" class="game-item locked belum-ada-link" data-mapel="PAI Kelas 7" data-ada-link="false">
                         <span class="game-emoji">🕋</span>
                         <span class="game-name">PAI</span>
-                        <span class="lock-badge">🔒</span>
+                        <span class="link-badge badge-coming">🔒 Segera</span>
                     </a>
-                    <a href="#" class="game-item locked" data-mapel="PJOK Kelas 7">
+                    <a href="#" class="game-item locked belum-ada-link" data-mapel="PJOK Kelas 7" data-ada-link="false">
                         <span class="game-emoji">🏃</span>
                         <span class="game-name">PJOK</span>
-                        <span class="lock-badge">🔒</span>
+                        <span class="link-badge badge-coming">🔒 Segera</span>
                     </a>
-                    <a href="#" class="game-item locked" data-mapel="Informatika Kelas 7">
+                    <a href="#" class="game-item locked belum-ada-link" data-mapel="Informatika Kelas 7" data-ada-link="false">
                         <span class="game-emoji">💻</span>
                         <span class="game-name">Informatika</span>
-                        <span class="lock-badge">🔒</span>
+                        <span class="link-badge badge-coming">🔒 Segera</span>
                     </a>
-                    <a href="#" class="game-item locked" data-mapel="Seni Budaya Kelas 7">
+                    <a href="#" class="game-item locked belum-ada-link" data-mapel="Seni Budaya Kelas 7" data-ada-link="false">
                         <span class="game-emoji">🎨</span>
                         <span class="game-name">Seni Budaya</span>
-                        <span class="lock-badge">🔒</span>
+                        <span class="link-badge badge-coming">🔒 Segera</span>
                     </a>
-                    <a href="#" class="game-item locked" data-mapel="PPKn Kelas 7">
+                    <a href="#" class="game-item locked belum-ada-link" data-mapel="PPKn Kelas 7" data-ada-link="false">
                         <span class="game-emoji">🏛️</span>
                         <span class="game-name">PPKn</span>
-                        <span class="lock-badge">🔒</span>
+                        <span class="link-badge badge-coming">🔒 Segera</span>
                     </a>
-                    <a href="#" class="game-item locked" data-mapel="Bahasa Jawa Kelas 7">
+                    <a href="#" class="game-item locked belum-ada-link" data-mapel="Bahasa Jawa Kelas 7" data-ada-link="false">
                         <span class="game-emoji">🗾</span>
                         <span class="game-name">Bahasa Jawa</span>
-                        <span class="lock-badge">🔒</span>
+                        <span class="link-badge badge-coming">🔒 Segera</span>
                     </a>
                 </div>
             </div>
@@ -335,317 +378,15 @@
                     <span class="arrow">▼</span>
                 </div>
                 <div class="submenu-game">
-                    <a href="https://www.educaplay.com/learning-resources/29960980-kuis_smp_fpb_kpk_bangun_datar_pecahan.html" target="_blank" rel="noopener" class="game-item locked" data-mapel="Matematika Kelas 8">
+                    <!-- MATEMATIKA - SUDAH ADA LINK -->
+                    <a href="https://www.educaplay.com/learning-resources/29960980-kuis_smp_fpb_kpk_bangun_datar_pecahan.html" target="_blank" rel="noopener" class="game-item locked ada-link" data-mapel="Matematika Kelas 8" data-ada-link="true">
                         <span class="game-emoji">📐</span>
                         <span class="game-name">Matematika</span>
-                        <span class="lock-badge">🔒</span>
+                        <span class="link-badge badge-ready">🔓 Siap Main</span>
                     </a>
-                    <a href="#" class="game-item locked" data-mapel="IPA Kelas 8">
+                    <a href="#" class="game-item locked belum-ada-link" data-mapel="IPA Kelas 8" data-ada-link="false">
                         <span class="game-emoji">🔬</span>
                         <span class="game-name">IPA</span>
-                        <span class="lock-badge">🔒</span>
+                        <span class="link-badge badge-coming">🔒 Segera</span>
                     </a>
-                    <a href="#" class="game-item locked" data-mapel="Bahasa Indonesia Kelas 8">
-                        <span class="game-emoji">📝</span>
-                        <span class="game-name">Bahasa Indonesia</span>
-                        <span class="lock-badge">🔒</span>
-                    </a>
-                    <a href="#" class="game-item locked" data-mapel="Bahasa Inggris Kelas 8">
-                        <span class="game-emoji">🗣️</span>
-                        <span class="game-name">Bahasa Inggris</span>
-                        <span class="lock-badge">🔒</span>
-                    </a>
-                    <a href="#" class="game-item locked" data-mapel="IPS Kelas 8">
-                        <span class="game-emoji">🌏</span>
-                        <span class="game-name">IPS</span>
-                        <span class="lock-badge">🔒</span>
-                    </a>
-                    <a href="#" class="game-item locked" data-mapel="PAI Kelas 8">
-                        <span class="game-emoji">🕋</span>
-                        <span class="game-name">PAI</span>
-                        <span class="lock-badge">🔒</span>
-                    </a>
-                    <a href="#" class="game-item locked" data-mapel="PJOK Kelas 8">
-                        <span class="game-emoji">🏃</span>
-                        <span class="game-name">PJOK</span>
-                        <span class="lock-badge">🔒</span>
-                    </a>
-                    <a href="#" class="game-item locked" data-mapel="Informatika Kelas 8">
-                        <span class="game-emoji">💻</span>
-                        <span class="game-name">Informatika</span>
-                        <span class="lock-badge">🔒</span>
-                    </a>
-                    <a href="#" class="game-item locked" data-mapel="Seni Budaya Kelas 8">
-                        <span class="game-emoji">🎨</span>
-                        <span class="game-name">Seni Budaya</span>
-                        <span class="lock-badge">🔒</span>
-                    </a>
-                    <a href="#" class="game-item locked" data-mapel="PPKn Kelas 8">
-                        <span class="game-emoji">🏛️</span>
-                        <span class="game-name">PPKn</span>
-                        <span class="lock-badge">🔒</span>
-                    </a>
-                    <a href="#" class="game-item locked" data-mapel="Bahasa Jawa Kelas 8">
-                        <span class="game-emoji">🗾</span>
-                        <span class="game-name">Bahasa Jawa</span>
-                        <span class="lock-badge">🔒</span>
-                    </a>
-                </div>
-            </div>
-
-            <!-- ==================== KELAS 9 - MERAH ==================== -->
-            <div id="kelas-9" class="kelas-card kelas-9 terkunci-semua" onclick="klikKelas('kelas-9')">
-                <span class="locked-label">🔒</span>
-                <div class="kelas-header">
-                    <span class="kelas-icon">📙</span>
-                    <div class="kelas-title">Kelas 9</div>
-                    <div class="kelas-desc">11 Mata Pelajaran</div>
-                    <span class="arrow">▼</span>
-                </div>
-                <div class="submenu-game">
-                    <a href="https://www.educaplay.com/learning-resources/29960980-kuis_smp_fpb_kpk_bangun_datar_pecahan.html" target="_blank" rel="noopener" class="game-item locked" data-mapel="Matematika Kelas 9">
-                        <span class="game-emoji">📐</span>
-                        <span class="game-name">Matematika</span>
-                        <span class="lock-badge">🔒</span>
-                    </a>
-                    <a href="#" class="game-item locked" data-mapel="IPA Kelas 9">
-                        <span class="game-emoji">🔬</span>
-                        <span class="game-name">IPA</span>
-                        <span class="lock-badge">🔒</span>
-                    </a>
-                    <a href="#" class="game-item locked" data-mapel="Bahasa Indonesia Kelas 9">
-                        <span class="game-emoji">📝</span>
-                        <span class="game-name">Bahasa Indonesia</span>
-                        <span class="lock-badge">🔒</span>
-                    </a>
-                    <a href="#" class="game-item locked" data-mapel="Bahasa Inggris Kelas 9">
-                        <span class="game-emoji">🗣️</span>
-                        <span class="game-name">Bahasa Inggris</span>
-                        <span class="lock-badge">🔒</span>
-                    </a>
-                    <a href="#" class="game-item locked" data-mapel="IPS Kelas 9">
-                        <span class="game-emoji">🌏</span>
-                        <span class="game-name">IPS</span>
-                        <span class="lock-badge">🔒</span>
-                    </a>
-                    <a href="#" class="game-item locked" data-mapel="PAI Kelas 9">
-                        <span class="game-emoji">🕋</span>
-                        <span class="game-name">PAI</span>
-                        <span class="lock-badge">🔒</span>
-                    </a>
-                    <a href="#" class="game-item locked" data-mapel="PJOK Kelas 9">
-                        <span class="game-emoji">🏃</span>
-                        <span class="game-name">PJOK</span>
-                        <span class="lock-badge">🔒</span>
-                    </a>
-                    <a href="#" class="game-item locked" data-mapel="Informatika Kelas 9">
-                        <span class="game-emoji">💻</span>
-                        <span class="game-name">Informatika</span>
-                        <span class="lock-badge">🔒</span>
-                    </a>
-                    <a href="#" class="game-item locked" data-mapel="Seni Budaya Kelas 9">
-                        <span class="game-emoji">🎨</span>
-                        <span class="game-name">Seni Budaya</span>
-                        <span class="lock-badge">🔒</span>
-                    </a>
-                    <a href="#" class="game-item locked" data-mapel="PPKn Kelas 9">
-                        <span class="game-emoji">🏛️</span>
-                        <span class="game-name">PPKn</span>
-                        <span class="lock-badge">🔒</span>
-                    </a>
-                    <a href="#" class="game-item locked" data-mapel="Bahasa Jawa Kelas 9">
-                        <span class="game-emoji">🗾</span>
-                        <span class="game-name">Bahasa Jawa</span>
-                        <span class="lock-badge">🔒</span>
-                    </a>
-                </div>
-            </div>
-
-        </div>
-
-        <!-- FOOTER -->
-        <div class="footer">
-            ⚠️ Klik menu kelas untuk melihat daftar mapel | Game hanya bisa dimainkan sesuai jadwal
-        </div>
-    </div>
-
-    <script>
-        // ============================================
-        // ⚙️ KONFIGURASI JADWAL AKSES
-        // ============================================
-        const TANGGAL_BUKA = new Date('2026-07-25T05:45:00+07:00');
-        const TANGGAL_TUTUP = new Date('2026-07-25T23:59:00+07:00');
-        // ============================================
-
-        let statusPortal = 'tutup';
-        let deferredPrompt;
-
-        // Splash Screen
-        window.addEventListener('load', function() {
-            setTimeout(function() {
-                document.getElementById('splash-screen').classList.add('hidden');
-            }, 2000);
-        });
-
-        // PWA Install Prompt
-        window.addEventListener('beforeinstallprompt', function(e) {
-            e.preventDefault();
-            deferredPrompt = e;
-            document.getElementById('install-banner').classList.add('show');
-        });
-        window.addEventListener('appinstalled', function() {
-            document.getElementById('install-banner').classList.remove('show');
-            deferredPrompt = null;
-        });
-        function installApp() {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then(function(choiceResult) {
-                    deferredPrompt = null;
-                    document.getElementById('install-banner').classList.remove('show');
-                });
-            }
-        }
-        function tutupBanner() {
-            document.getElementById('install-banner').classList.remove('show');
-        }
-
-        // Service Worker
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('sw.js')
-                    .then(function(reg) { console.log('SW terdaftar'); })
-                    .catch(function(err) { console.log('SW gagal'); });
-            });
-        }
-
-        function formatTanggal(date) {
-            const h = String(date.getDate()).padStart(2, '0');
-            const b = String(date.getMonth() + 1).padStart(2, '0');
-            const t = date.getFullYear();
-            const j = String(date.getHours()).padStart(2, '0');
-            const m = String(date.getMinutes()).padStart(2, '0');
-            return `${h}/${b}/${t} ${j}:${m} WIB`;
-        }
-        function formatCountdown(ms) {
-            if (ms <= 0) return { habis: true, text: '00:00:00' };
-            const td = Math.floor(ms / 1000);
-            const j = Math.floor(td / 3600);
-            const m = Math.floor((td % 3600) / 60);
-            const d = td % 60;
-            return { habis: false, text: `${String(j).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(d).padStart(2,'0')}` };
-        }
-
-        function updateUI() {
-            const sekarang = new Date();
-            const sBuka = TANGGAL_BUKA - sekarang;
-            const sTutup = TANGGAL_TUTUP - sekarang;
-
-            const stEl = document.getElementById('status-akses');
-            const cdText = document.getElementById('countdown-text');
-            const cdLabel = document.getElementById('countdown-label');
-            const semuaGame = document.querySelectorAll('.game-item');
-            const semuaKelas = document.querySelectorAll('.kelas-card');
-
-            document.getElementById('info-buka').textContent = formatTanggal(TANGGAL_BUKA);
-            document.getElementById('info-tutup').textContent = formatTanggal(TANGGAL_TUTUP);
-
-            if (sBuka > 0) {
-                statusPortal = 'tutup';
-                stEl.className = 'status tutup';
-                stEl.innerHTML = '🔒 <strong>PORTAL BELUM DIBUKA</strong>';
-                cdText.textContent = formatCountdown(sBuka).text;
-                cdLabel.textContent = 'menuju waktu buka';
-                kunciSemuaGame(semuaGame);
-                semuaKelas.forEach(k => k.classList.add('terkunci-semua'));
-            } else if (sTutup > 0) {
-                statusPortal = 'buka';
-                const sisa = Math.floor(sTutup / 60000);
-                if (sisa <= 30) {
-                    stEl.className = 'status akan-tutup';
-                    stEl.innerHTML = '⚠️ <strong>PORTAL AKAN SEGERA DITUTUP!</strong>';
-                } else {
-                    stEl.className = 'status buka';
-                    stEl.innerHTML = '✅ <strong>PORTAL SEDANG DIBUKA!</strong> — Selamat belajar! 🎉';
-                }
-                cdText.textContent = formatCountdown(sTutup).text;
-                cdLabel.textContent = 'menuju waktu tutup';
-                bukaKunciSemuaGame(semuaGame);
-                semuaKelas.forEach(k => k.classList.remove('terkunci-semua'));
-            } else {
-                statusPortal = 'lewat';
-                stEl.className = 'status tutup';
-                stEl.innerHTML = '🚫 <strong>PORTAL SUDAH DITUTUP</strong>';
-                cdText.textContent = '⛔ DITUTUP';
-                cdLabel.textContent = 'Akses telah berakhir';
-                kunciSemuaGame(semuaGame);
-                semuaKelas.forEach(k => k.classList.add('terkunci-semua'));
-            }
-        }
-
-        function bukaKunciSemuaGame(semuaGame) {
-            semuaGame.forEach(function(game) {
-                // Hapus class locked
-                game.classList.remove('locked');
-                game.classList.add('available');
-                
-                // Update badge
-                const badge = game.querySelector('.lock-badge');
-                if (badge) badge.textContent = '🔓';
-                
-                // Aktifkan klik
-                game.style.pointerEvents = 'auto';
-                
-                // Hapus semua event listener lama dengan clone
-                const gameBaru = game.cloneNode(true);
-                game.parentNode.replaceChild(gameBaru, game);
-                
-                // Cek apakah href bukan "#"
-                const href = gameBaru.getAttribute('href');
-                const mapel = gameBaru.getAttribute('data-mapel');
-                
-                if (href === '#') {
-                    // Tidak ada link — tampilkan alert
-                    gameBaru.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        alert('🎮 Game ' + mapel + ' akan segera tersedia!\n\nLink game akan diupdate oleh admin.');
-                    });
-                }
-                // Jika href bukan "#", biarkan <a> bekerja normal (Matematika)
-            });
-        }
-
-        function kunciSemuaGame(semuaGame) {
-            semuaGame.forEach(function(game) {
-                game.classList.add('locked');
-                game.classList.remove('available');
-                const badge = game.querySelector('.lock-badge');
-                if (badge) badge.textContent = '🔒';
-                game.style.pointerEvents = 'none';
-            });
-        }
-
-        function klikKelas(idKelas) {
-            const kelasCard = document.getElementById(idKelas);
-            
-            if (statusPortal === 'tutup') {
-                const s = TANGGAL_BUKA - new Date();
-                const cd = formatCountdown(s);
-                alert('🔒 Portal belum dibuka.\n\nAkan dibuka dalam ' + cd.text + ' lagi.\nJadwal: ' + formatTanggal(TANGGAL_BUKA));
-            } else if (statusPortal === 'lewat') {
-                alert('🚫 Portal sudah ditutup.\n\nBatas waktu: ' + formatTanggal(TANGGAL_TUTUP));
-            } else {
-                const semuaKelas = document.querySelectorAll('.kelas-card');
-                semuaKelas.forEach(function(k) {
-                    if (k.id !== idKelas) k.classList.remove('terbuka');
-                });
-                kelasCard.classList.toggle('terbuka');
-            }
-        }
-
-        updateUI();
-        setInterval(updateUI, 1000);
-    </script>
-</body>
-</html>
+                    <a href="#" class="game-item locked belum-ada-link" data-mapel="Ba
