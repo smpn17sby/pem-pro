@@ -229,6 +229,7 @@
         #admin-panel input, #admin-panel select { margin: 4px 0; padding: 6px; width: 100%; max-width: 300px; border-radius: 6px; border: 1px solid #ccc; }
         #admin-panel button { margin-top: 10px; padding: 8px 16px; background: #1a237e; color: white; border: none; border-radius: 6px; cursor: pointer; }
         #admin-panel .section { margin-bottom: 15px; }
+        #reset-btn { background: #d32f2f; }
     </style>
 </head>
 <body>
@@ -261,12 +262,12 @@
             <div class="school-address">Jl. Tenggilis Mejoyo No.1, Surabaya</div>
         </div>
 
-        <!-- ===== RUNNING TEXT ===== -->
+        <!-- RUNNING TEXT -->
         <div class="running-text-wrapper">
             <div class="running-text-content">
                 <span>🎯 <span class="highlight">PEM-Pro</span> – Portal Try Out & Edugame</span>
                 <span>📅 Jadwal: <span class="highlight">Rabu</span> (Minggu ke-2 & 4) • 06.45 – 07.30 WIB</span>
-                <span>📌 Simulasi UNBK & soal interaktif untuk Kelas 7, 8, 9</span>
+                <span>📌 Simulasi ANBK & soal interaktif untuk Kelas 7, 8, 9</span>
                 <span>🚀 Klik menu kelas untuk mulai bermain!</span>
                 <span>📢 Pengumuman: Link game akan diupdate secara berkala</span>
             </div>
@@ -447,9 +448,7 @@
             <h3>⚙️ Pengaturan Jadwal</h3>
             <div class="section">
                 <strong>📅 Tanggal Khusus (One-Time)</strong>
-                <div id="special-dates-container">
-                    <!-- diisi oleh JS -->
-                </div>
+                <div id="special-dates-container"></div>
                 <button onclick="tambahSpecialDate()">+ Tambah Tanggal</button>
             </div>
             <div class="section">
@@ -477,13 +476,14 @@
                 <label>Jam Tutup: <input type="time" id="recurring-tutup" value="07:30"></label>
             </div>
             <button onclick="simpanJadwal()">💾 Simpan Jadwal</button>
+            <button id="reset-btn" onclick="resetJadwal()">🔄 Reset ke Default</button>
             <p style="color:green; display:none;" id="simpan-berhasil">✅ Jadwal tersimpan!</p>
         </div>
     </div>
 
     <script>
         // ============================================
-        // ⚙️ KONFIGURASI JADWAL DEFAULT
+        // KONFIGURASI DEFAULT
         // ============================================
         const DEFAULT_JADWAL = {
             recurring: {
@@ -493,7 +493,7 @@
                 jamTutup: '07:30'
             },
             specialDates: [
-                { tanggal: '2026-07-29', jamBuka: '06:45', jamTutup: '07:30' }
+                { tanggal: '2026-07-27', jamBuka: '22:45', jamTutup: '24:00' }
             ]
         };
 
@@ -560,7 +560,7 @@
                         if (jamMenit >= buka && jamMenit < tutup) {
                             return { status: 'buka', sisaMenit: tutup - jamMenit };
                         } else if (jamMenit < buka) {
-                            return { status: 'tutup' }; // nanti dihitung next open
+                            return { status: 'tutup' };
                         } else {
                             return { status: 'tutup' };
                         }
@@ -590,11 +590,10 @@
             return { status: 'tutup' };
         }
 
-        // Cari jadwal buka berikutnya (next opening time)
+        // Cari jadwal buka berikutnya (next opening time) - perbaikan
         function getNextOpenTime() {
             const now = new Date();
             const nowTime = now.getTime();
-
             let candidates = [];
 
             // 1. Special dates (tanggal pasti)
@@ -602,22 +601,21 @@
                 for (let sp of jadwal.specialDates) {
                     const [bH, bM] = sp.jamBuka.split(':').map(Number);
                     const dateObj = new Date(sp.tanggal + 'T' + sp.jamBuka + ':00');
-                    // Jika tanggal sudah lewat, lewati
-                    if (dateObj.getTime() < nowTime) continue;
-                    candidates.push(dateObj);
+                    if (dateObj.getTime() >= nowTime) {
+                        candidates.push(dateObj);
+                    }
                 }
             }
 
-            // 2. Recurring (setiap minggu)
+            // 2. Recurring – cari dalam 30 hari ke depan
             if (jadwal.recurring) {
                 const { hari, minggu, jamBuka } = jadwal.recurring;
                 const [bH, bM] = jamBuka.split(':').map(Number);
-                // Cari 4 minggu ke depan
-                for (let i = 0; i < 4; i++) {
+                for (let i = 0; i < 30; i++) {
                     const dt = new Date(now);
-                    dt.setDate(now.getDate() + i * 7);
-                    const mingguKe = getWeekOfMonth(dt);
-                    if (minggu.includes(mingguKe) && dt.getDay() === hari) {
+                    dt.setDate(now.getDate() + i);
+                    // Cek hari dan minggu ke-
+                    if (dt.getDay() === hari && minggu.includes(getWeekOfMonth(dt))) {
                         dt.setHours(bH, bM, 0, 0);
                         if (dt.getTime() >= nowTime) {
                             candidates.push(dt);
@@ -627,7 +625,6 @@
             }
 
             if (candidates.length === 0) return null;
-            // Urutkan dari yang paling dekat
             candidates.sort((a, b) => a.getTime() - b.getTime());
             return candidates[0];
         }
@@ -680,7 +677,6 @@
                         cdText.textContent = cd.text;
                         cdLabel.textContent = 'menuju waktu buka';
                     } else {
-                        // Sudah lewat, mungkin sudah buka? Tapi statusInfo bilang tutup, jadi fallback
                         cdText.textContent = '00:00:00';
                         cdLabel.textContent = 'tidak ada jadwal';
                     }
@@ -818,6 +814,16 @@
                 document.getElementById('simpan-berhasil').style.display = 'none';
             }, 2000);
             updateUI();
+        }
+
+        function resetJadwal() {
+            if (confirm('Reset jadwal ke default? Semua perubahan akan hilang.')) {
+                localStorage.removeItem('pempro_jadwal');
+                jadwal = JSON.parse(JSON.stringify(DEFAULT_JADWAL));
+                muatFormJadwal();
+                updateUI();
+                alert('✅ Jadwal direset ke default!');
+            }
         }
     </script>
 </body>
