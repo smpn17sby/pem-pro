@@ -78,6 +78,41 @@
         .header .school-name { font-size: 1.2em; color: #d32f2f; font-weight: 700; }
         .header .school-address { font-size: 0.8em; color: #888; }
 
+        /* ===== RUNNING TEXT ===== */
+        .running-text-wrapper {
+            background: linear-gradient(90deg, #1a237e, #4a148c);
+            padding: 8px 0;
+            border-radius: 30px;
+            margin: 12px 0 16px 0;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        .running-text-content {
+            display: inline-block;
+            white-space: nowrap;
+            animation: scrollText 25s linear infinite;
+            color: #fff;
+            font-weight: 600;
+            font-size: 1em;
+            padding-left: 100%;
+            letter-spacing: 0.5px;
+        }
+        .running-text-content span {
+            margin: 0 30px;
+            display: inline-block;
+        }
+        .running-text-content .highlight {
+            color: #ffd54f;
+            font-weight: 700;
+        }
+        @keyframes scrollText {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-100%); }
+        }
+        @media (max-width: 600px) {
+            .running-text-content { animation-duration: 18s; font-size: 0.85em; }
+        }
+
         .jadwal-container { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; }
         .jadwal-badge {
             display: inline-block; padding: 8px 16px; border-radius: 50px;
@@ -224,6 +259,17 @@
             <div class="app-subtitle">PMA Edugame Match Programme</div>
             <div class="school-name">SMP Negeri 17 Surabaya</div>
             <div class="school-address">Jl. Tenggilis Mejoyo No.1, Surabaya</div>
+        </div>
+
+        <!-- ===== RUNNING TEXT ===== -->
+        <div class="running-text-wrapper">
+            <div class="running-text-content">
+                <span>🎯 <span class="highlight">PEM-Pro</span> – Portal Try Out & Edugame</span>
+                <span>📅 Jadwal: <span class="highlight">Rabu</span> (Minggu ke-2 & 4) • 06.45 – 07.30 WIB</span>
+                <span>📌 Simulasi UNBK & soal interaktif untuk Kelas 7, 8, 9</span>
+                <span>🚀 Klik menu kelas untuk mulai bermain!</span>
+                <span>📢 Pengumuman: Link game akan diupdate secara berkala</span>
+            </div>
         </div>
 
         <!-- INFO JADWAL -->
@@ -440,50 +486,44 @@
         // ⚙️ KONFIGURASI JADWAL DEFAULT
         // ============================================
         const DEFAULT_JADWAL = {
-            // Jadwal berulang: Rabu minggu ke-2 & ke-4, 06:45-07:30 WIB
             recurring: {
-                hari: 3,                // 0=Minggu, 1=Senin, ..., 6=Sabtu
-                minggu: [2, 4],         // minggu ke-2 dan ke-4 dalam bulan
+                hari: 3,
+                minggu: [2, 4],
                 jamBuka: '06:45',
                 jamTutup: '07:30'
             },
-            // Tanggal khusus: pembukaan pertama 29 Juli 2026
             specialDates: [
                 { tanggal: '2026-07-29', jamBuka: '06:45', jamTutup: '07:30' }
             ]
         };
 
-        // Muat jadwal dari localStorage atau gunakan default
         let jadwal = JSON.parse(localStorage.getItem('pempro_jadwal')) || DEFAULT_JADWAL;
-
         let statusPortal = 'tutup';
         let deferredPrompt;
         let gameItems = [];
 
-        // Splash Screen
+        // ============================================
+        // SPLASH, INSTALL, SERVICE WORKER
+        // ============================================
         window.addEventListener('load', function() {
-            setTimeout(function() {
+            setTimeout(() => {
                 document.getElementById('splash-screen').classList.add('hidden');
             }, 1500);
-            
             initGameItems();
             updateUI();
             setInterval(updateUI, 1000);
-            
-            // Panel admin jika ?admin
             if (window.location.search.includes('admin')) {
                 document.getElementById('admin-panel').classList.add('show');
                 muatFormJadwal();
             }
         });
 
-        // PWA Install
-        window.addEventListener('beforeinstallprompt', function(e) {
+        window.addEventListener('beforeinstallprompt', e => {
             e.preventDefault();
             deferredPrompt = e;
             document.getElementById('install-banner').classList.add('show');
         });
-        window.addEventListener('appinstalled', function() {
+        window.addEventListener('appinstalled', () => {
             document.getElementById('install-banner').classList.remove('show');
         });
         function installApp() {
@@ -492,106 +532,125 @@
         }
         function tutupBanner() { document.getElementById('install-banner').classList.remove('show'); }
 
-        // Service Worker
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js');
         }
 
         // ============================================
-        // FUNGSI UTAMA PENJADWALAN
+        // FUNGSI PENJADWALAN
         // ============================================
         function getWeekOfMonth(date) {
-            const tanggal = date.getDate();
-            return Math.ceil(tanggal / 7); // 1-7 => 1, 8-14 => 2, 15-21 => 3, 22-28 => 4, 29-31 => 5
+            return Math.ceil(date.getDate() / 7);
         }
 
+        // Cek status saat ini (buka/tutup) dan sisa menit jika sedang buka
         function getStatusSekarang() {
-            const sekarang = new Date();
-            const todayStr = sekarang.toISOString().split('T')[0]; // YYYY-MM-DD
-            const jamMenitSekarang = sekarang.getHours() * 60 + sekarang.getMinutes();
+            const now = new Date();
+            const todayStr = now.toISOString().split('T')[0];
+            const jamMenit = now.getHours() * 60 + now.getMinutes();
 
-            // 1. Cek tanggal khusus dulu (prioritas)
+            // 1. Special dates
             if (jadwal.specialDates) {
-                for (let special of jadwal.specialDates) {
-                    if (special.tanggal === todayStr) {
-                        const [bukaH, bukaM] = special.jamBuka.split(':').map(Number);
-                        const [tutupH, tutupM] = special.jamTutup.split(':').map(Number);
-                        const bukaMenit = bukaH * 60 + bukaM;
-                        const tutupMenit = tutupH * 60 + tutupM;
-                        if (jamMenitSekarang >= bukaMenit && jamMenitSekarang < tutupMenit) {
-                            return { status: 'buka', sisaMenit: tutupMenit - jamMenitSekarang };
-                        } else if (jamMenitSekarang < bukaMenit) {
-                            return { status: 'tutup', sisaMenit: bukaMenit - jamMenitSekarang, reason: 'special' };
+                for (let sp of jadwal.specialDates) {
+                    if (sp.tanggal === todayStr) {
+                        const [bH, bM] = sp.jamBuka.split(':').map(Number);
+                        const [tH, tM] = sp.jamTutup.split(':').map(Number);
+                        const buka = bH * 60 + bM;
+                        const tutup = tH * 60 + tM;
+                        if (jamMenit >= buka && jamMenit < tutup) {
+                            return { status: 'buka', sisaMenit: tutup - jamMenit };
+                        } else if (jamMenit < buka) {
+                            return { status: 'tutup' }; // nanti dihitung next open
                         } else {
-                            return { status: 'tutup', reason: 'sudah lewat special' };
+                            return { status: 'tutup' };
                         }
                     }
                 }
             }
 
-            // 2. Jadwal berulang
+            // 2. Recurring
             if (jadwal.recurring) {
                 const { hari, minggu, jamBuka, jamTutup } = jadwal.recurring;
-                const hariIni = sekarang.getDay(); // 0-6
-                const mingguIni = getWeekOfMonth(sekarang);
-
+                const hariIni = now.getDay();
+                const mingguIni = getWeekOfMonth(now);
                 if (hariIni === hari && minggu.includes(mingguIni)) {
-                    const [bukaH, bukaM] = jamBuka.split(':').map(Number);
-                    const [tutupH, tutupM] = jamTutup.split(':').map(Number);
-                    const bukaMenit = bukaH * 60 + bukaM;
-                    const tutupMenit = tutupH * 60 + tutupM;
-                    if (jamMenitSekarang >= bukaMenit && jamMenitSekarang < tutupMenit) {
-                        return { status: 'buka', sisaMenit: tutupMenit - jamMenitSekarang };
-                    } else if (jamMenitSekarang < bukaMenit) {
-                        return { status: 'tutup', sisaMenit: bukaMenit - jamMenitSekarang, reason: 'recurring' };
+                    const [bH, bM] = jamBuka.split(':').map(Number);
+                    const [tH, tM] = jamTutup.split(':').map(Number);
+                    const buka = bH * 60 + bM;
+                    const tutup = tH * 60 + tM;
+                    if (jamMenit >= buka && jamMenit < tutup) {
+                        return { status: 'buka', sisaMenit: tutup - jamMenit };
+                    } else if (jamMenit < buka) {
+                        return { status: 'tutup' };
                     } else {
-                        return { status: 'tutup', reason: 'sudah lewat recurring' };
+                        return { status: 'tutup' };
+                    }
+                }
+            }
+            return { status: 'tutup' };
+        }
+
+        // Cari jadwal buka berikutnya (next opening time)
+        function getNextOpenTime() {
+            const now = new Date();
+            const nowTime = now.getTime();
+
+            let candidates = [];
+
+            // 1. Special dates (tanggal pasti)
+            if (jadwal.specialDates) {
+                for (let sp of jadwal.specialDates) {
+                    const [bH, bM] = sp.jamBuka.split(':').map(Number);
+                    const dateObj = new Date(sp.tanggal + 'T' + sp.jamBuka + ':00');
+                    // Jika tanggal sudah lewat, lewati
+                    if (dateObj.getTime() < nowTime) continue;
+                    candidates.push(dateObj);
+                }
+            }
+
+            // 2. Recurring (setiap minggu)
+            if (jadwal.recurring) {
+                const { hari, minggu, jamBuka } = jadwal.recurring;
+                const [bH, bM] = jamBuka.split(':').map(Number);
+                // Cari 4 minggu ke depan
+                for (let i = 0; i < 4; i++) {
+                    const dt = new Date(now);
+                    dt.setDate(now.getDate() + i * 7);
+                    const mingguKe = getWeekOfMonth(dt);
+                    if (minggu.includes(mingguKe) && dt.getDay() === hari) {
+                        dt.setHours(bH, bM, 0, 0);
+                        if (dt.getTime() >= nowTime) {
+                            candidates.push(dt);
+                        }
                     }
                 }
             }
 
-            // 3. Tidak ada jadwal
-            return { status: 'tutup', reason: 'tidak ada jadwal' };
+            if (candidates.length === 0) return null;
+            // Urutkan dari yang paling dekat
+            candidates.sort((a, b) => a.getTime() - b.getTime());
+            return candidates[0];
         }
 
-        function formatTanggal(date) {
-            return date.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', hour12: false });
-        }
-        function formatCountdown(ms) {
-            if (ms <= 0) return { habis: true, text: '00:00:00' };
-            const td = Math.floor(ms / 1000);
-            return { habis: false, text: `${String(Math.floor(td/3600)).padStart(2,'0')}:${String(Math.floor((td%3600)/60)).padStart(2,'0')}:${String(td%60).padStart(2,'0')}` };
-        }
-
+        // ============================================
+        // UPDATE UI (setiap detik)
+        // ============================================
         function updateUI() {
             const statusInfo = getStatusSekarang();
             const stEl = document.getElementById('status-akses');
             const cdText = document.getElementById('countdown-text');
             const cdLabel = document.getElementById('countdown-label');
             const semuaKelas = document.querySelectorAll('.kelas-card');
-            
-            // Info badge jadwal (tampilkan deskripsi singkat)
+
+            // Info badge
             document.getElementById('info-buka').textContent = jadwal.specialDates?.length ? 
                 `${jadwal.specialDates[0].tanggal} & Recurring` : 'Recurring';
             document.getElementById('info-tutup').textContent = jadwal.recurring ? 
                 `Rabu Mg ke-${jadwal.recurring.minggu.join(',')} ${jadwal.recurring.jamBuka}-${jadwal.recurring.jamTutup}` : '';
 
-            if (statusInfo.status === 'tutup') {
-                statusPortal = 'tutup';
-                stEl.className = 'status tutup';
-                stEl.innerHTML = '🔒 <strong>PORTAL BELUM DIBUKA</strong>';
-                
-                let sisa = 0;
-                if (statusInfo.sisaMenit !== undefined) {
-                    sisa = statusInfo.sisaMenit * 60 * 1000;
-                }
-                const cd = formatCountdown(sisa);
-                cdText.textContent = cd.text;
-                cdLabel.textContent = 'menuju waktu buka';
-                
-                setGameState('locked');
-                semuaKelas.forEach(k => k.classList.add('terkunci-semua'));
-            } else {
+            const now = new Date();
+
+            if (statusInfo.status === 'buka') {
                 statusPortal = 'buka';
                 const sisaMenit = statusInfo.sisaMenit;
                 if (sisaMenit !== undefined && sisaMenit <= 30) {
@@ -601,14 +660,43 @@
                     stEl.className = 'status buka';
                     stEl.innerHTML = '✅ <strong>PORTAL SEDANG DIBUKA!</strong> — Selamat belajar! 🎉';
                 }
-                
                 const cd = formatCountdown(sisaMenit * 60 * 1000);
                 cdText.textContent = cd.text;
                 cdLabel.textContent = 'menuju waktu tutup';
-                
                 setGameState('available');
                 semuaKelas.forEach(k => k.classList.remove('terkunci-semua'));
+
+            } else {
+                // Status TUTUP – cari jadwal berikutnya
+                statusPortal = 'tutup';
+                stEl.className = 'status tutup';
+                stEl.innerHTML = '🔒 <strong>PORTAL BELUM DIBUKA</strong>';
+
+                const nextOpen = getNextOpenTime();
+                if (nextOpen) {
+                    const diff = nextOpen.getTime() - now.getTime();
+                    if (diff > 0) {
+                        const cd = formatCountdown(diff);
+                        cdText.textContent = cd.text;
+                        cdLabel.textContent = 'menuju waktu buka';
+                    } else {
+                        // Sudah lewat, mungkin sudah buka? Tapi statusInfo bilang tutup, jadi fallback
+                        cdText.textContent = '00:00:00';
+                        cdLabel.textContent = 'tidak ada jadwal';
+                    }
+                } else {
+                    cdText.textContent = '--:--:--';
+                    cdLabel.textContent = 'tidak ada jadwal';
+                }
+                setGameState('locked');
+                semuaKelas.forEach(k => k.classList.add('terkunci-semua'));
             }
+        }
+
+        function formatCountdown(ms) {
+            if (ms <= 0) return { habis: true, text: '00:00:00' };
+            const td = Math.floor(ms / 1000);
+            return { habis: false, text: `${String(Math.floor(td/3600)).padStart(2,'0')}:${String(Math.floor((td%3600)/60)).padStart(2,'0')}:${String(td%60).padStart(2,'0')}` };
         }
 
         function setGameState(state) {
@@ -655,10 +743,9 @@
         }
 
         // ============================================
-        // FUNGSI ADMIN PANEL
+        // ADMIN PANEL
         // ============================================
         function muatFormJadwal() {
-            // Special dates
             const container = document.getElementById('special-dates-container');
             container.innerHTML = '';
             if (jadwal.specialDates) {
@@ -675,7 +762,6 @@
                 });
             }
 
-            // Recurring
             if (jadwal.recurring) {
                 document.getElementById('recurring-hari').value = jadwal.recurring.hari;
                 const checks = document.querySelectorAll('#admin-panel input[type=checkbox]');
@@ -699,7 +785,6 @@
         }
 
         function simpanJadwal() {
-            // Baca special dates dari form
             const tanggalInputs = document.querySelectorAll('.special-tanggal');
             const bukaInputs = document.querySelectorAll('.special-buka');
             const tutupInputs = document.querySelectorAll('.special-tutup');
@@ -715,7 +800,6 @@
             }
             jadwal.specialDates = specialDates;
 
-            // Baca recurring
             const hari = parseInt(document.getElementById('recurring-hari').value);
             const checks = document.querySelectorAll('#admin-panel input[type=checkbox]:checked');
             const minggu = Array.from(checks).map(cb => parseInt(cb.value));
@@ -728,7 +812,6 @@
             }
 
             jadwal.recurring = { hari, minggu, jamBuka, jamTutup };
-
             localStorage.setItem('pempro_jadwal', JSON.stringify(jadwal));
             document.getElementById('simpan-berhasil').style.display = 'block';
             setTimeout(() => {
